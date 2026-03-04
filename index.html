@@ -284,49 +284,33 @@ body:has(#sidebar.expanded) #sidebar-toggle { left: 226px; }
   box-shadow: 0 -2px 12px rgba(0,0,0,.08);
 }
 #bottom-nav-track {
-  display: flex; height: 66px;
-  overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 0 4px;
+  display: flex;
+  height: 62px;
+  align-items: stretch;
 }
-#bottom-nav-track::-webkit-scrollbar { display: none; }
-
 .mob-nav-item {
-  flex: 0 0 auto; min-width: 68px;
+  flex: 1;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 3px;
+  align-items: center; justify-content: center; gap: 2px;
   cursor: pointer; border: none;
   background: transparent; color: var(--muted);
-  font-family: 'Mulish', sans-serif; font-size: 10px; font-weight: 600;
-  padding: 8px 10px;
-  scroll-snap-align: start;
-  border-radius: var(--r-md);
+  font-family: 'Mulish', sans-serif; font-size: 9px; font-weight: 700;
+  padding: 6px 2px;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   white-space: nowrap;
+  border-top: 2px solid transparent;
+  transition: color .15s, border-color .15s, background .15s;
+  letter-spacing: .02em;
 }
-.mob-nav-item.active { color: var(--accent); }
-.mob-nav-icon {
-  font-size: 22px; line-height: 1;
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm);
-  background: transparent;
-  transition: background .18s;
+.mob-nav-item:active { background: var(--surface2); }
+.mob-nav-item.active {
+  color: var(--accent);
+  border-top-color: var(--accent);
+  background: var(--accent-bg);
 }
-.mob-nav-item.active .mob-nav-icon { background: var(--accent-bg); }
-.mob-nav-label { font-size: 10px; line-height: 1; }
-
-/* Fade edges */
-#bottom-nav::before, #bottom-nav::after {
-  content: ''; position: absolute; top: 0; bottom: 0; width: 20px;
-  pointer-events: none; z-index: 2;
-}
-#bottom-nav::before { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
-#bottom-nav::after  { right: 0; background: linear-gradient(to left,  var(--surface), transparent); }
-#bottom-nav.at-start::before { opacity: 0; }
-#bottom-nav.at-end::after    { opacity: 0; }
+.mob-nav-icon { font-size: 20px; line-height: 1; margin-bottom: 1px; }
+.mob-nav-label { font-size: 9px; line-height: 1; }
 
 /* ══════════════════════════════════════════
    MAIN LAYOUT
@@ -1257,10 +1241,7 @@ tbody tr:hover td { background: var(--accent-bg); }
       <span class="mob-nav-icon">🎓</span>
       <span class="mob-nav-label">Capacitação</span>
     </button>
-    <button class="mob-nav-item" id="mob-theme-btn">
-      <span class="mob-nav-icon" id="mob-theme-icon">☀️</span>
-      <span class="mob-nav-label">Tema</span>
-    </button>
+
   </div>
 </nav>
 
@@ -1314,7 +1295,12 @@ function navigate(id) {
 }
 
 navItems.forEach(n => n.addEventListener('click', () => navigate(n.dataset.view)));
-mobNavItems.forEach(n => n.addEventListener('click', () => navigate(n.dataset.view)));
+
+// Mobile nav — event delegation on the track (more reliable on touch)
+document.getElementById('bottom-nav-track').addEventListener('click', e => {
+  const btn = e.target.closest('.mob-nav-item[data-view]');
+  if (btn) navigate(btn.dataset.view);
+});
 
 // ── SIDEBAR ──
 function updateMainMargin() {
@@ -1339,13 +1325,7 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
 });
 window.addEventListener('resize', updateMainMargin);
 
-// ── BOTTOM NAV SHADOW ──
-const track = document.getElementById('bottom-nav-track');
-const bnav  = document.getElementById('bottom-nav');
-track.addEventListener('scroll', () => {
-  bnav.classList.toggle('at-start', track.scrollLeft < 8);
-  bnav.classList.toggle('at-end', track.scrollLeft + track.clientWidth >= track.scrollWidth - 8);
-}, { passive: true });
+
 
 // ── TOAST ──
 function toast(msg, type='ok') {
@@ -1385,14 +1365,12 @@ function applyTheme(isDark) {
   const label = isDark ? 'Modo Escuro' : 'Modo Claro';
   document.getElementById('theme-icon-desk').textContent = icon;
   document.getElementById('theme-icon-mob').textContent  = icon;
-  if (document.getElementById('mob-theme-icon')) document.getElementById('mob-theme-icon').textContent = icon;
   document.getElementById('theme-label-desk').textContent = label;
   LS.set('theme', isDark ? 'dark' : 'light');
 }
 function toggleTheme() { applyTheme(!document.documentElement.classList.contains('dark')); }
 document.getElementById('theme-toggle-desk').addEventListener('click', toggleTheme);
 document.getElementById('theme-toggle-mob').addEventListener('click', toggleTheme);
-document.getElementById('mob-theme-btn').addEventListener('click', toggleTheme);
 if (LS.get('theme') === 'dark') applyTheme(true);
 
 // ══════════════════════════════════════════════
