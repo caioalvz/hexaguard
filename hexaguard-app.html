@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HEXAGUARD — Atendimento Humanizado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap" rel="stylesheet"/>
+<style>
+  /* ── DARK THEME (padrão) ── */
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1e2230;
+    --border: #2a2f42;
+    --accent: #d95f2b;
+    --accent2: #e8855a;
+    --gold: #c49a3c;
+    --text: #e8e4dc;
+    --muted: #7a8099;
+    --danger: #c94040;
+    --success: #2e8c5e;
+    --info: #2e6fd4;
+    --purple: #7c4dde;
+    --shadow: rgba(0,0,0,.4);
+    --theme-icon: '☀';
+  }
+
+  /* ── LIGHT THEME ── */
+  :root.light {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --surface2: #ede9e3;
+    --border: #d4cfc7;
+    --accent: #c04f1c;
+    --accent2: #d97145;
+    --gold: #9a6f0e;
+    --text: #1e1c19;
+    --muted: #6b6560;
+    --danger: #b83030;
+    --success: #1e7a4e;
+    --info: #1a5bbf;
+    --purple: #5c35b8;
+    --shadow: rgba(0,0,0,.12);
+    --theme-icon: '☾';
+  }
+
+  /* Smooth theme transition on every element */
+  *, *::before, *::after {
+    transition:
+      background-color .25s ease,
+      border-color .25s ease,
+      color .25s ease,
+      box-shadow .25s ease;
+  }
+  /* But NOT layout transitions — keep those instant */
+  #sidebar, #main { transition: width .3s cubic-bezier(.4,0,.2,1), margin-left .3s cubic-bezier(.4,0,.2,1) !important; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1; opacity: .5;
+  }
+
+  /* ══════════════════════════════════════
+     SIDEBAR — desktop only (≥ 769px)
+  ══════════════════════════════════════ */
+  #sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 72px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 0; gap: 8px; z-index: 100;
+    transition: width .3s cubic-bezier(.4,0,.2,1);
+  }
+  #sidebar.expanded { width: 220px; }
+
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; color: #fff; flex-shrink: 0;
+    transition: transform .3s;
+  }
+  #sidebar:hover .logo-mark { transform: rotate(30deg); }
+
+  .logo-text {
+    font-family: 'Fraunces', serif; font-size: 13px;
+    color: var(--accent); letter-spacing: .12em;
+    display: none; white-space: nowrap;
+  }
+  #sidebar.expanded .logo-text { display: block; }
+
+  .nav-item {
+    width: 100%; display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; cursor: pointer; border: none;
+    background: transparent; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .08em; text-align: left;
+    border-left: 2px solid transparent;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active {
+    color: var(--accent); border-left-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .nav-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+  .nav-label { display: none; }
+  #sidebar.expanded .nav-label { display: block; }
+
+  /* ── SIDEBAR TOGGLE BUTTON ── */
+  #sidebar-toggle {
+    position: absolute; top: 50%; right: -14px;
+    transform: translateY(-50%);
+    width: 28px; height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    z-index: 101;
+    box-shadow: 2px 0 8px var(--shadow);
+  }
+  #sidebar-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #sidebar-toggle .toggle-arrow { transition: transform .3s cubic-bezier(.4,0,.2,1); display: inline-block; }
+  #sidebar.expanded #sidebar-toggle .toggle-arrow { transform: rotate(180deg); }
+
+  /* ── THEME TOGGLE ── */
+  #theme-toggle-desk, #theme-toggle-mob {
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; padding: 6px; border-radius: 50%;
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  #theme-toggle-desk:hover, #theme-toggle-mob:hover { color: var(--accent); }
+
+  /* desktop: sits at bottom of sidebar */
+  #theme-toggle-desk {
+    margin-top: auto;
+    width: 40px; height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface2);
+  }
+  #sidebar.expanded #theme-toggle-desk { width: calc(100% - 32px); border-radius: 4px; gap: 10px; }
+  .theme-desk-label { display: none; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .08em; }
+  #sidebar.expanded .theme-desk-label { display: block; }
+
+  /* mobile: in topbar */
+  #theme-toggle-mob { font-size: 16px; }
+
+  /* ══════════════════════════════════════
+     BOTTOM NAV — mobile only (≤ 768px)
+  ══════════════════════════════════════ */
+  #bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    /* safe area for notched phones */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* the scrollable track */
+  #bottom-nav-track {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* padding so first/last items can be centred visually */
+    padding: 0 8px;
+    gap: 0;
+  }
+  #bottom-nav-track::-webkit-scrollbar { display: none; }
+
+  .mob-nav-item {
+    flex: 0 0 auto;
+    min-width: 72px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    cursor: pointer; border: none;
+    background: transparent; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .06em;
+    padding: 8px 12px;
+    scroll-snap-align: start;
+    transition: color .2s, background .2s;
+    border-top: 2px solid transparent;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+  .mob-nav-item:active { background: var(--surface2); }
+  .mob-nav-item.active {
+    color: var(--accent);
+    border-top-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+  .mob-nav-icon { font-size: 20px; line-height: 1; }
+  .mob-nav-label { font-size: 9px; }
+
+  /* drag-hint fade indicators on sides */
+  #bottom-nav::before,
+  #bottom-nav::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0; width: 24px;
+    pointer-events: none; z-index: 2;
+    transition: opacity .3s;
+  }
+  #bottom-nav::before {
+    left: 0;
+    background: linear-gradient(to right, var(--surface), transparent);
+  }
+  #bottom-nav::after {
+    right: 0;
+    background: linear-gradient(to left, var(--surface), transparent);
+  }
+  #bottom-nav.at-start::before { opacity: 0; }
+  #bottom-nav.at-end::after   { opacity: 0; }
+
+  /* ══════════════════════════════════════
+     MAIN / LAYOUT
+  ══════════════════════════════════════ */
+  #main {
+    margin-left: 72px; min-height: 100vh;
+    transition: margin-left .3s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    height: 56px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  #menu-toggle {
+    background: none; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; padding: 4px;
+    transition: color .2s; flex-shrink: 0;
+  }
+  #menu-toggle:hover { color: var(--text); }
+
+  #page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; color: var(--text); flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .top-badge {
+    background: color-mix(in srgb, var(--accent) 15%, transparent); border: 1px solid var(--accent);
+    color: var(--accent); font-size: 9px; letter-spacing: .1em;
+    padding: 3px 8px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding: 24px 20px 100px; animation: fadeIn .35s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ══════════════════════════════════════
+     DESKTOP (≥ 769px) overrides
+  ══════════════════════════════════════ */
+  @media (min-width: 769px) {
+    #sidebar { display: flex; }
+    #bottom-nav { display: none !important; }
+    #main { margin-left: 72px; }
+    #sidebar.expanded ~ #main { margin-left: 220px; }
+    .view { padding: 40px 48px 40px; }
+    #topbar { height: 64px; padding: 0 32px; }
+    #page-title { font-size: 20px; }
+    .top-badge { font-size: 10px; padding: 4px 10px; }
+    #theme-toggle-mob { display: none; }
+  }
+
+  /* ══════════════════════════════════════
+     MOBILE (≤ 768px) overrides
+  ══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    #sidebar, #sidebar-toggle { display: none !important; }
+    #bottom-nav { display: block; }
+    #main { margin-left: 0; padding-bottom: 72px; }
+    #menu-toggle { display: none; }
+    .view { padding: 16px 16px 96px; }
+    #topbar { padding: 0 16px; height: 52px; }
+    #page-title { font-size: 16px; }
+
+    /* stack charts vertically */
+    #chart-area { grid-template-columns: 1fr !important; }
+
+    /* forms single column */
+    .form-grid { grid-template-columns: 1fr !important; }
+    .form-group.full { grid-column: 1; }
+
+    /* hero banner compact */
+    .hero-banner { padding: 20px; gap: 16px; flex-wrap: wrap; }
+    .hero-text h1 { font-size: 20px; }
+    .hero-text p { font-size: 10px; }
+    .hero-hex { width: 44px; height: 44px; font-size: 20px; }
+
+    /* kpi compact */
+    .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+    .kpi-value { font-size: 32px; }
+
+    /* table horizontal scroll */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 560px; }
+
+    /* form card padding */
+    .form-card { padding: 20px; }
+
+    /* modal full-screen on mobile */
+    #modal-box { padding: 24px 20px; width: 96%; max-height: 88vh; }
+
+    /* toast above bottom nav */
+    #toast { bottom: 88px; right: 16px; left: 16px; max-width: 100%; }
+
+    /* chart bar label shorter */
+    .chart-bar-label { width: 100px; font-size: 9px; }
+
+    /* enc grid 2 cols */
+    .enc-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+    .enc-card { padding: 16px; }
+    .enc-icon { font-size: 22px; margin-bottom: 8px; }
+    .enc-name { font-size: 13px; }
+    .enc-desc { font-size: 9px; }
+
+    /* check eixo tag hide on very small */
+    .check-eixo { display: none; }
+
+    /* section title smaller */
+    .section-title { font-size: 18px; }
+
+    /* btn full width on forms */
+    #view-registro > div:last-child { flex-direction: column; }
+    #view-registro > div:last-child .btn { width: 100%; justify-content: center; }
+  }
+
+  @media (max-width: 400px) {
+    .kpi-grid { grid-template-columns: 1fr !important; }
+    .enc-grid { grid-template-columns: 1fr !important; }
+    .top-badge { display: none; }
+  }
+
+  /* ── DASHBOARD ── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 40px;
+  }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 24px; position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .kpi-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.orange::after { background: var(--accent); }
+  .kpi-card.gold::after { background: var(--gold); }
+  .kpi-card.green::after { background: var(--success); }
+  .kpi-card.blue::after { background: var(--info); }
+
+  .kpi-label { font-size: 10px; letter-spacing: .12em; color: var(--muted); margin-bottom: 12px; }
+  .kpi-value {
+    font-family: 'DM Serif Display', serif; font-size: 42px;
+    line-height: 1; color: var(--text);
+  }
+  .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 8px; }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif; font-size: 22px;
+    color: var(--text); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── TIMELINE (últimos casos) ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item {
+    display: flex; gap: 16px; padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn .4s ease both;
+  }
+  .tl-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    margin-top: 5px; flex-shrink: 0;
+  }
+  .tl-dot.alta { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .tl-dot.media { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .tl-dot.baixa { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+  .tl-content { flex: 1; }
+  .tl-id { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .tl-tipo { font-size: 13px; color: var(--text); margin-bottom: 2px; }
+  .tl-date { font-size: 10px; color: var(--muted); }
+  .tl-status {
+    font-size: 10px; padding: 2px 8px; border-radius: 1px;
+    align-self: flex-start; letter-spacing: .08em;
+  }
+  .tl-status.aberto { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); border: 1px solid var(--danger); }
+  .tl-status.encaminhado { background: color-mix(in srgb, var(--info) 15%, transparent); color: var(--info); border: 1px solid var(--info); }
+  .tl-status.resolvido { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); border: 1px solid var(--success); }
+
+  /* ── FORMS ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+
+  input, select, textarea {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 14px; font-family: 'DM Mono', monospace;
+    font-size: 12px; outline: none; transition: border-color .2s;
+    appearance: none; border-radius: 0;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 100px; }
+  select option { background: var(--surface2); color: var(--text); }
+
+  .btn {
+    padding: 12px 24px; font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: .1em; cursor: pointer;
+    border: none; transition: all .2s; display: inline-flex;
+    align-items: center; gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text); }
+  .btn-danger {
+    background: transparent; color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .btn-danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+
+  .form-card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 32px; margin-bottom: 24px;
+  }
+  .form-card-title {
+    font-family: 'Fraunces', serif; font-size: 14px;
+    letter-spacing: .08em; color: var(--accent2);
+    margin-bottom: 24px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── TABELA ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 12px 16px;
+    font-size: 10px; letter-spacing: .12em; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  td {
+    padding: 14px 16px; font-size: 11px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:hover td { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+
+  /* ── CHECKLIST (protocolo) ── */
+  .checklist { display: flex; flex-direction: column; gap: 12px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 16px; background: var(--surface);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: border-color .2s;
+  }
+  .check-item:hover { border-color: var(--accent); }
+  .check-item.done { border-color: var(--success); opacity: .7; }
+  .check-box {
+    width: 20px; height: 20px; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 12px; transition: all .2s;
+  }
+  .check-item.done .check-box {
+    background: var(--success); border-color: var(--success); color: #fff;
+  }
+  .check-text { flex: 1; }
+  .check-title { font-size: 12px; color: var(--text); margin-bottom: 4px; }
+  .check-desc { font-size: 10px; color: var(--muted); line-height: 1.6; }
+  .check-eixo {
+    font-size: 9px; padding: 2px 6px; letter-spacing: .08em;
+    border-radius: 1px; flex-shrink: 0;
+  }
+  .eixo-psi { background: color-mix(in srgb, var(--purple) 15%, transparent); color: var(--purple); border: 1px solid var(--purple); }
+  .eixo-jur { background: color-mix(in srgb, var(--gold) 15%, transparent); color: var(--gold); border: 1px solid var(--gold); }
+  .eixo-ope { background: color-mix(in srgb, var(--info) 15%, transparent); color: var(--info); border: 1px solid var(--info); }
+
+  /* ── ENCAMINHAMENTOS ── */
+  .enc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .enc-card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 24px; transition: border-color .2s, transform .2s;
+  }
+  .enc-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .enc-icon { font-size: 28px; margin-bottom: 12px; }
+  .enc-name { font-family: 'Fraunces', serif; font-size: 15px; margin-bottom: 6px; }
+  .enc-desc { font-size: 10px; color: var(--muted); line-height: 1.6; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 32px; right: 32px;
+    background: var(--surface2); border: 1px solid var(--accent);
+    color: var(--text); padding: 14px 20px; font-size: 12px;
+    z-index: 9000; transform: translateY(80px); opacity: 0;
+    transition: all .3s cubic-bezier(.4,0,.2,1);
+    max-width: 320px; border-left: 3px solid var(--accent);
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    z-index: 500; display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #modal-overlay.open { display: flex; }
+  #modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 40px; width: 90%; max-width: 680px;
+    max-height: 80vh; overflow-y: auto;
+    animation: fadeIn .3s ease;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif; font-size: 22px;
+    margin-bottom: 24px; color: var(--accent);
+  }
+  #modal-content { font-size: 12px; line-height: 1.8; color: var(--muted); }
+  #modal-content strong { color: var(--text); }
+  #modal-content .field { margin-bottom: 12px; }
+  #modal-content .field-label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+  #modal-content .field-value { color: var(--text); margin-top: 2px; }
+
+  /* ── URGÊNCIA BADGE ── */
+  .urg { font-size: 10px; padding: 2px 8px; letter-spacing: .06em; }
+  .urg.alta { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); border: 1px solid var(--danger); }
+  .urg.media { background: color-mix(in srgb, var(--gold) 15%, transparent); color: var(--gold); border: 1px solid var(--gold); }
+  .urg.baixa { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); border: 1px solid var(--success); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { background: var(--border); height: 4px; margin-top: 8px; }
+  .progress-bar { height: 4px; background: var(--accent); transition: width .5s ease; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 80px 40px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+  .empty-text { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 8px; }
+  .empty-sub { font-size: 11px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── LIGHT MODE: input/select fix ── */
+  :root.light input, :root.light select, :root.light textarea {
+    color-scheme: light;
+  }
+
+
+
+  /* ── MINI CHART ── */
+  .chart-bar-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .chart-bar-row { display: flex; align-items: center; gap: 12px; }
+  .chart-bar-label { font-size: 10px; color: var(--muted); width: 140px; flex-shrink: 0; }
+  .chart-bar-bg { flex: 1; background: var(--border); height: 6px; }
+  .chart-bar-fill { height: 6px; border-radius: 0; transition: width 1s ease; }
+  .chart-bar-val { font-size: 10px; color: var(--muted); width: 30px; text-align: right; }
+
+  /* ── HEADER CARD ── */
+  .hero-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px 40px; margin-bottom: 40px;
+    display: flex; align-items: center; gap: 32px;
+    position: relative; overflow: hidden;
+  }
+  .hero-banner::before {
+    content: '⬡'; position: absolute; right: -20px; top: -20px;
+    font-size: 160px; color: var(--accent); opacity: .04;
+    line-height: 1;
+  }
+  .hero-hex {
+    width: 60px; height: 60px; background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .hero-text h1 {
+    font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 6px;
+  }
+  .hero-text p { font-size: 11px; color: var(--muted); line-height: 1.6; max-width: 600px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;padding:0 16px">
+    <div class="logo-mark">H</div>
+    <span class="logo-text">HEXAGUARD</span>
+  </div>
+
+  <button class="nav-item active" data-view="dashboard">
+    <span class="nav-icon">◈</span>
+    <span class="nav-label">Painel Geral</span>
+  </button>
+  <button class="nav-item" data-view="registro">
+    <span class="nav-icon">✦</span>
+    <span class="nav-label">Novo Caso</span>
+  </button>
+  <button class="nav-item" data-view="casos">
+    <span class="nav-icon">◉</span>
+    <span class="nav-label">Casos Ativos</span>
+  </button>
+  <button class="nav-item" data-view="protocolo">
+    <span class="nav-icon">◎</span>
+    <span class="nav-label">Protocolo PCI</span>
+  </button>
+  <button class="nav-item" data-view="encaminhamentos">
+    <span class="nav-icon">⬡</span>
+    <span class="nav-label">Encaminhamentos</span>
+  </button>
+  <button class="nav-item" data-view="capacitacao">
+    <span class="nav-icon">◇</span>
+    <span class="nav-label">Capacitação</span>
+  </button>
+
+  <button id="sidebar-toggle" title="Retrair menu">
+    <span class="toggle-arrow">›</span>
+  </button>
+
+  <button id="theme-toggle-desk" title="Alternar tema">
+    <span id="theme-icon-desk">☀</span>
+    <span class="theme-desk-label" id="theme-label-desk">Tema Claro</span>
+  </button>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <button id="menu-toggle">☰</button>
+    <span id="page-title">Painel Geral</span>
+    <button id="theme-toggle-mob" title="Alternar tema"><span id="theme-icon-mob">☀</span></button>
+    <span class="top-badge">ODS 5 · META 5.2</span>
+  </div>
+
+  <!-- ════════════ DASHBOARD ════════════ -->
+  <div id="view-dashboard" class="view active">
+    <div class="hero-banner">
+      <div class="hero-hex">🛡️</div>
+      <div class="hero-text">
+        <h1>HEXAGUARD</h1>
+        <p>Sistema de suporte ao atendimento humanizado de mulheres em situação de violência. Alinhado à Meta 5.2 da ODS 5 da Agenda 2030. Todos os dados são armazenados localmente neste dispositivo.</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px" id="chart-area">
+      <div class="form-card">
+        <div class="form-card-title">TIPOS DE VIOLÊNCIA REGISTRADOS</div>
+        <div class="chart-bar-wrap" id="chart-tipos"></div>
+      </div>
+      <div class="form-card">
+        <div class="form-card-title">URGÊNCIA DOS CASOS</div>
+        <div class="chart-bar-wrap" id="chart-urgencia"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Casos Recentes</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- ════════════ REGISTRO ════════════ -->
+  <div id="view-registro" class="view">
+    <div class="section-title">Registrar Novo Caso</div>
+
+    <div class="form-card">
+      <div class="form-card-title">◈ IDENTIFICAÇÃO DO CASO</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>CÓDIGO DO CASO (automático)</label>
+          <input type="text" id="f-codigo" readonly placeholder="gerado automaticamente"/>
+        </div>
+        <div class="form-group">
+          <label>DATA DO ATENDIMENTO</label>
+          <input type="date" id="f-data"/>
+        </div>
+        <div class="form-group">
+          <label>NOME DA ATENDENTE / AGENTE</label>
+          <input type="text" id="f-agente" placeholder="Nome do profissional responsável"/>
+        </div>
+        <div class="form-group">
+          <label>SETOR DE ATENDIMENTO</label>
+          <select id="f-setor">
+            <option value="">Selecione...</option>
+            <option>Delegacia da Mulher — DEAM</option>
+            <option>Delegacia Comum</option>
+            <option>CRAS</option>
+            <option>CREAS</option>
+            <option>UPA / Hospital</option>
+            <option>Central Ligue 180</option>
+            <option>Vara de Violência Doméstica</option>
+            <option>Defensoria Pública</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">✦ DADOS DO ATENDIMENTO (sem identificação pessoal)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>TIPO DE VIOLÊNCIA (principal)</label>
+          <select id="f-tipo">
+            <option value="">Selecione...</option>
+            <option>Violência Física</option>
+            <option>Violência Psicológica</option>
+            <option>Violência Sexual</option>
+            <option>Violência Patrimonial</option>
+            <option>Violência Moral</option>
+            <option>Múltiplas Formas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>GRAU DE URGÊNCIA</label>
+          <select id="f-urgencia">
+            <option value="">Selecione...</option>
+            <option>Alta — Risco imediato</option>
+            <option>Média — Requer acompanhamento</option>
+            <option>Baixa — Situação estabilizada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>RELAÇÃO COM O AGRESSOR</label>
+          <select id="f-relacao">
+            <option value="">Selecione...</option>
+            <option>Cônjuge / Parceiro(a)</option>
+            <option>Ex-cônjuge / Ex-parceiro(a)</option>
+            <option>Familiar (pai, irmão, filho)</option>
+            <option>Conhecido</option>
+            <option>Desconhecido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>STATUS DO CASO</label>
+          <select id="f-status">
+            <option>Aberto</option>
+            <option>Encaminhado</option>
+            <option>Resolvido</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>MEDIDA PROTETIVA DE URGÊNCIA (Lei Maria da Penha)</label>
+          <select id="f-mpu">
+            <option>Não solicitada</option>
+            <option>Solicitada — Aguardando deferimento</option>
+            <option>Deferida</option>
+            <option>Indeferida</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>ENCAMINHAMENTOS REALIZADOS</label>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px" id="enc-checks">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="CRAS"/> CRAS</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="CREAS"/> CREAS</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="Abrigo"/> Abrigo</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="Hospital"/> Hospital / UPA</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="Defensoria"/> Defensoria</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="MP"/> Ministério Público</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox" value="DEAM"/> DEAM</label>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>OBSERVAÇÕES DO ATENDIMENTO (sem dados pessoais identificáveis)</label>
+          <textarea id="f-obs" placeholder="Descreva o contexto do atendimento, condutas adotadas e necessidades identificadas..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">◎ AVALIAÇÃO DO PROTOCOLO PCI</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>EIXO PSICOSSOCIAL — ESCUTA ATIVA</label>
+          <select id="f-eixo-psi">
+            <option>✓ Aplicado integralmente</option>
+            <option>~ Aplicado parcialmente</option>
+            <option>✗ Não aplicado</option>
+            <option>— Não se aplica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>EIXO JURÍDICO-NORMATIVO</label>
+          <select id="f-eixo-jur">
+            <option>✓ Aplicado integralmente</option>
+            <option>~ Aplicado parcialmente</option>
+            <option>✗ Não aplicado</option>
+            <option>— Não se aplica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>EIXO OPERACIONAL — FLUXO DE ENC.</label>
+          <select id="f-eixo-ope">
+            <option>✓ Aplicado integralmente</option>
+            <option>~ Aplicado parcialmente</option>
+            <option>✗ Não aplicado</option>
+            <option>— Não se aplica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>HOUVE REVITIMIZAÇÃO?</label>
+          <select id="f-revit">
+            <option>Não identificada</option>
+            <option>Sim — pelo próprio serviço</option>
+            <option>Sim — relatada em outro órgão</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-primary" id="btn-salvar">✦ SALVAR CASO</button>
+      <button class="btn btn-secondary" id="btn-limpar">LIMPAR CAMPOS</button>
+    </div>
+  </div>
+
+  <!-- ════════════ CASOS ════════════ -->
+  <div id="view-casos" class="view">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div class="section-title" style="margin-bottom:0">Casos Registrados</div>
+      <div style="display:flex;gap:10px">
+        <select id="filter-status" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;border-radius:0">
+          <option value="">Todos os status</option>
+          <option>Aberto</option>
+          <option>Encaminhado</option>
+          <option>Resolvido</option>
+        </select>
+        <select id="filter-urgencia" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;border-radius:0">
+          <option value="">Todas as urgências</option>
+          <option>Alta</option>
+          <option>Média</option>
+          <option>Baixa</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>DATA</th>
+            <th>TIPO</th>
+            <th>URGÊNCIA</th>
+            <th>SETOR</th>
+            <th>MPU</th>
+            <th>STATUS</th>
+            <th>AÇÕES</th>
+          </tr>
+        </thead>
+        <tbody id="casos-tbody"></tbody>
+      </table>
+    </div>
+    <div id="casos-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">◈</div>
+      <div class="empty-text">Nenhum caso registrado</div>
+      <div class="empty-sub">Use a aba "Novo Caso" para começar</div>
+    </div>
+  </div>
+
+  <!-- ════════════ PROTOCOLO PCI ════════════ -->
+  <div id="view-protocolo" class="view">
+    <div class="hero-banner" style="margin-bottom:32px">
+      <div class="hero-hex" style="background:var(--purple)">📋</div>
+      <div class="hero-text">
+        <h1>Protocolo PCI</h1>
+        <p>Programa de Capacitação Integrada — checklist de boas práticas baseado nos 3 eixos do HEXAGUARD. Marque os itens conforme forem aplicados no atendimento.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:0">Eixo Psicossocial</div>
+      <button class="btn btn-secondary" id="btn-reset-proto" style="font-size:10px;padding:8px 14px">REINICIAR CHECKLIST</button>
+    </div>
+
+    <div class="checklist" id="checklist-psi"></div>
+
+    <div class="section-title" style="margin-top:32px">Eixo Jurídico-Normativo</div>
+    <div class="checklist" id="checklist-jur"></div>
+
+    <div class="section-title" style="margin-top:32px">Eixo Operacional</div>
+    <div class="checklist" id="checklist-ope"></div>
+
+    <div class="form-card" style="margin-top:32px">
+      <div class="form-card-title">PROGRESSO GERAL DO PROTOCOLO</div>
+      <div id="proto-progress-text" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
+      <div class="progress-wrap"><div class="progress-bar" id="proto-progress-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- ════════════ ENCAMINHAMENTOS ════════════ -->
+  <div id="view-encaminhamentos" class="view">
+    <div class="section-title">Rede de Proteção — Encaminhamentos</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:32px;line-height:1.7">Mapa da rede de proteção conforme o Eixo Operacional do PCI. Cada caso deve ser encaminhado ao serviço adequado para evitar que a mulher precise repetir seu relato múltiplas vezes.</p>
+    <div class="enc-grid" id="enc-grid"></div>
+  </div>
+
+  <!-- ════════════ CAPACITAÇÃO ════════════ -->
+  <div id="view-capacitacao" class="view">
+    <div class="section-title">Módulos de Capacitação</div>
+
+    <div id="quiz-area"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav id="bottom-nav" class="at-start">
+  <div id="bottom-nav-track">
+    <button class="mob-nav-item active" data-view="dashboard">
+      <span class="mob-nav-icon">◈</span>
+      <span class="mob-nav-label">Painel</span>
+    </button>
+    <button class="mob-nav-item" data-view="registro">
+      <span class="mob-nav-icon">✦</span>
+      <span class="mob-nav-label">Novo Caso</span>
+    </button>
+    <button class="mob-nav-item" data-view="casos">
+      <span class="mob-nav-icon">◉</span>
+      <span class="mob-nav-label">Casos</span>
+    </button>
+    <button class="mob-nav-item" data-view="protocolo">
+      <span class="mob-nav-icon">◎</span>
+      <span class="mob-nav-label">Protocolo</span>
+    </button>
+    <button class="mob-nav-item" data-view="encaminhamentos">
+      <span class="mob-nav-icon">⬡</span>
+      <span class="mob-nav-label">Encaminh.</span>
+    </button>
+    <button class="mob-nav-item" data-view="capacitacao">
+      <span class="mob-nav-icon">◇</span>
+      <span class="mob-nav-label">Capacitação</span>
+    </button>
+  </div>
+</nav>
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-content"></div>
+    <div style="margin-top:24px;display:flex;gap:12px" id="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// HEXAGUARD — Engine Principal
+// ══════════════════════════════════════════════
+
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem('hxg_'+k)) } catch { return null } },
+  set: (k,v) => localStorage.setItem('hxg_'+k, JSON.stringify(v)),
+  del: k => localStorage.removeItem('hxg_'+k)
+};
+
+// ── NAVIGATION ──
+const views = document.querySelectorAll('.view');
+const navItems = document.querySelectorAll('.nav-item');
+const mobNavItems = document.querySelectorAll('.mob-nav-item');
+const pageTitles = {
+  dashboard:'Painel Geral', registro:'Novo Caso',
+  casos:'Casos Ativos', protocolo:'Protocolo PCI',
+  encaminhamentos:'Encaminhamentos', capacitacao:'Capacitação'
+};
+
+function navigate(id) {
+  views.forEach(v => v.classList.remove('active'));
+  navItems.forEach(n => n.classList.remove('active'));
+  mobNavItems.forEach(n => n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll(`[data-view="${id}"]`).forEach(el => el.classList.add('active'));
+  document.getElementById('page-title').textContent = pageTitles[id];
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'casos') renderCasos();
+  if (id === 'protocolo') renderProtocolo();
+  if (id === 'encaminhamentos') renderEncaminhamentos();
+  if (id === 'capacitacao') renderCapacitacao();
+  // scroll content to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+navItems.forEach(n => n.addEventListener('click', () => navigate(n.dataset.view)));
+mobNavItems.forEach(n => n.addEventListener('click', () => navigate(n.dataset.view)));
+
+// ── SIDEBAR TOGGLE ──
+function updateMainMargin() {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main');
+  if (window.innerWidth >= 769) {
+    main.style.marginLeft = sidebar.classList.contains('expanded') ? '220px' : '72px';
+  } else {
+    main.style.marginLeft = '0';
+  }
+}
+
+document.getElementById('menu-toggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('expanded');
+  updateMainMargin();
+});
+
+document.getElementById('sidebar-toggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('expanded');
+  updateMainMargin();
+});
+
+window.addEventListener('resize', updateMainMargin);
+
+// ── BOTTOM NAV SCROLL SHADOW ──
+const track = document.getElementById('bottom-nav-track');
+const bnav = document.getElementById('bottom-nav');
+if (track) {
+  track.addEventListener('scroll', () => {
+    const atStart = track.scrollLeft < 8;
+    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+    bnav.classList.toggle('at-start', atStart);
+    bnav.classList.toggle('at-end', atEnd);
+  }, { passive: true });
+}
+
+// ── TOAST ──
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = type==='ok' ? 'var(--success)' : type==='err' ? 'var(--danger)' : 'var(--accent)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── MODAL ──
+function openModal(title, html, actions=[]) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-content').innerHTML = html;
+  const act = document.getElementById('modal-actions');
+  act.innerHTML = '';
+  actions.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'btn ' + (a.cls || 'btn-secondary');
+    b.textContent = a.label;
+    b.onclick = a.fn;
+    act.appendChild(b);
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// ══════════════════════════════════════════════
+// DADOS
+// ══════════════════════════════════════════════
+
+function getCasos() { return LS.get('casos') || []; }
+function saveCasos(c) { LS.set('casos', c); }
+
+function gerarCodigo() {
+  const n = (LS.get('counter') || 0) + 1;
+  LS.set('counter', n);
+  return 'HXG-' + String(n).padStart(4,'0') + '-' + new Date().getFullYear();
+}
+
+// ── REGISTRO ──
+function initRegistro() {
+  const d = new Date();
+  document.getElementById('f-data').value = d.toISOString().split('T')[0];
+  document.getElementById('f-codigo').value = gerarCodigo();
+}
+
+document.getElementById('btn-salvar').addEventListener('click', () => {
+  const tipo = document.getElementById('f-tipo').value;
+  const urgencia = document.getElementById('f-urgencia').value;
+  const setor = document.getElementById('f-setor').value;
+  const agente = document.getElementById('f-agente').value;
+
+  if (!tipo || !urgencia || !setor || !agente) {
+    toast('Preencha os campos obrigatórios: agente, setor, tipo e urgência.', 'err');
+    return;
+  }
+
+  const encs = [...document.querySelectorAll('#enc-checks input:checked')].map(c => c.value);
+
+  const caso = {
+    id: document.getElementById('f-codigo').value,
+    data: document.getElementById('f-data').value,
+    agente, setor, tipo,
+    urgencia: urgencia.split(' ')[0],
+    relacao: document.getElementById('f-relacao').value,
+    status: document.getElementById('f-status').value,
+    mpu: document.getElementById('f-mpu').value,
+    encaminhamentos: encs,
+    obs: document.getElementById('f-obs').value,
+    eixoPsi: document.getElementById('f-eixo-psi').value,
+    eixoJur: document.getElementById('f-eixo-jur').value,
+    eixoOpe: document.getElementById('f-eixo-ope').value,
+    revit: document.getElementById('f-revit').value,
+    criadoEm: Date.now()
+  };
+
+  const casos = getCasos();
+  casos.unshift(caso);
+  saveCasos(casos);
+
+  toast('✦ Caso ' + caso.id + ' registrado com sucesso!', 'ok');
+  limparCampos();
+  initRegistro();
+});
+
+document.getElementById('btn-limpar').addEventListener('click', () => { limparCampos(); initRegistro(); });
+
+function limparCampos() {
+  ['f-agente','f-obs'].forEach(id => document.getElementById(id).value = '');
+  ['f-tipo','f-urgencia','f-setor','f-relacao'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('#enc-checks input').forEach(c => c.checked = false);
+  document.getElementById('f-status').value = 'Aberto';
+  document.getElementById('f-mpu').value = 'Não solicitada';
+  document.getElementById('f-eixo-psi').value = '✓ Aplicado integralmente';
+  document.getElementById('f-eixo-jur').value = '✓ Aplicado integralmente';
+  document.getElementById('f-eixo-ope').value = '✓ Aplicado integralmente';
+  document.getElementById('f-revit').value = 'Não identificada';
+}
+
+initRegistro();
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+
+function renderDashboard() {
+  const casos = getCasos();
+  const total = casos.length;
+  const abertos = casos.filter(c => c.status === 'Aberto').length;
+  const encaminhados = casos.filter(c => c.status === 'Encaminhado').length;
+  const alta = casos.filter(c => c.urgencia === 'Alta').length;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card orange">
+      <div class="kpi-label">TOTAL DE CASOS</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">registrados neste dispositivo</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">CASOS ABERTOS</div>
+      <div class="kpi-value">${abertos}</div>
+      <div class="kpi-sub">aguardando resolução</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">ENCAMINHADOS</div>
+      <div class="kpi-value">${encaminhados}</div>
+      <div class="kpi-sub">em acompanhamento</div>
+    </div>
+    <div class="kpi-card" style="--c:var(--danger)">
+      <div class="kpi-label">URGÊNCIA ALTA</div>
+      <div class="kpi-value" style="color:var(--danger)">${alta}</div>
+      <div class="kpi-sub">requerem atenção imediata</div>
+      <div class="progress-wrap" style="margin-top:12px"><div class="progress-bar" style="width:${total?Math.round(alta/total*100):0}%;background:var(--danger)"></div></div>
+    </div>
+  `;
+
+  // Charts
+  const tipos = {};
+  const urgs = {};
+  casos.forEach(c => {
+    const t = c.tipo || 'N/D'; tipos[t] = (tipos[t]||0)+1;
+    const u = c.urgencia || 'N/D'; urgs[u] = (urgs[u]||0)+1;
+  });
+
+  const tiposColors = { 'Violência Física':'#e8673a','Violência Psicológica':'#8b5cf6','Violência Sexual':'#c94040','Violência Patrimonial':'#d4a853','Violência Moral':'#3a7ae8','Múltiplas Formas':'#3a9e6e' };
+  const urgColors = { 'Alta':'#c94040','Média':'#d4a853','Baixa':'#3a9e6e' };
+
+  function renderChart(containerId, data, colors) {
+    const el = document.getElementById(containerId);
+    if (!Object.keys(data).length) { el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Sem dados ainda</div>'; return; }
+    const max = Math.max(...Object.values(data));
+    el.innerHTML = Object.entries(data).map(([k,v]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${k}</div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${Math.round(v/max*100)}%;background:${colors[k]||'var(--accent)'}"></div></div>
+        <div class="chart-bar-val">${v}</div>
+      </div>
+    `).join('');
+  }
+
+  renderChart('chart-tipos', tipos, tiposColors);
+  renderChart('chart-urgencia', urgs, urgColors);
+
+  // Timeline
+  const tl = document.getElementById('timeline');
+  const recentes = casos.slice(0,6);
+  if (!recentes.length) {
+    tl.innerHTML = '<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">Nenhum caso ainda</div><div class="empty-sub">Registre o primeiro caso</div></div>';
+    return;
+  }
+  tl.innerHTML = recentes.map((c,i) => `
+    <div class="tl-item" style="animation-delay:${i*0.07}s">
+      <div class="tl-dot ${c.urgencia==='Alta'?'alta':c.urgencia==='Média'?'media':'baixa'}"></div>
+      <div class="tl-content">
+        <div class="tl-id">${c.id} · ${c.setor}</div>
+        <div class="tl-tipo">${c.tipo || 'Não especificado'}</div>
+        <div class="tl-date">${formatDate(c.data)} · Agente: ${c.agente}</div>
+      </div>
+      <span class="tl-status ${c.status.toLowerCase()}">${c.status}</span>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// CASOS
+// ══════════════════════════════════════════════
+
+function renderCasos() {
+  const fStatus = document.getElementById('filter-status').value;
+  const fUrg = document.getElementById('filter-urgencia').value;
+  let casos = getCasos();
+
+  if (fStatus) casos = casos.filter(c => c.status === fStatus);
+  if (fUrg) casos = casos.filter(c => c.urgencia.startsWith(fUrg));
+
+  const tbody = document.getElementById('casos-tbody');
+  const empty = document.getElementById('casos-empty');
+
+  if (!casos.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = casos.map(c => `
+    <tr>
+      <td><span style="color:var(--accent)">${c.id}</span></td>
+      <td>${formatDate(c.data)}</td>
+      <td>${c.tipo||'—'}</td>
+      <td><span class="urg ${c.urgencia==='Alta'?'alta':c.urgencia==='Média'?'media':'baixa'}">${c.urgencia}</span></td>
+      <td style="color:var(--muted);font-size:10px">${c.setor}</td>
+      <td style="font-size:10px;color:${c.mpu==='Deferida'?'var(--success)':'var(--muted)'}">${c.mpu}</td>
+      <td><span class="tl-status ${c.status.toLowerCase()}">${c.status}</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary" style="padding:4px 10px;font-size:9px" onclick="verCaso('${c.id}')">VER</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:9px" onclick="deletarCaso('${c.id}')">DEL</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('filter-status').addEventListener('change', renderCasos);
+document.getElementById('filter-urgencia').addEventListener('change', renderCasos);
+
+function verCaso(id) {
+  const c = getCasos().find(x => x.id === id);
+  if (!c) return;
+  const html = `
+    <div class="field"><div class="field-label">CÓDIGO</div><div class="field-value">${c.id}</div></div>
+    <div class="field"><div class="field-label">DATA</div><div class="field-value">${formatDate(c.data)}</div></div>
+    <div class="field"><div class="field-label">AGENTE</div><div class="field-value">${c.agente}</div></div>
+    <div class="field"><div class="field-label">SETOR</div><div class="field-value">${c.setor}</div></div>
+    <div class="field"><div class="field-label">TIPO DE VIOLÊNCIA</div><div class="field-value">${c.tipo||'—'}</div></div>
+    <div class="field"><div class="field-label">URGÊNCIA</div><div class="field-value">${c.urgencia}</div></div>
+    <div class="field"><div class="field-label">RELAÇÃO COM AGRESSOR</div><div class="field-value">${c.relacao||'—'}</div></div>
+    <div class="field"><div class="field-label">MEDIDA PROTETIVA</div><div class="field-value">${c.mpu}</div></div>
+    <div class="field"><div class="field-label">ENCAMINHAMENTOS</div><div class="field-value">${c.encaminhamentos?.join(', ')||'—'}</div></div>
+    <div class="field"><div class="field-label">STATUS</div><div class="field-value">${c.status}</div></div>
+    <div class="field"><div class="field-label">EIXO PSICOSSOCIAL</div><div class="field-value">${c.eixoPsi}</div></div>
+    <div class="field"><div class="field-label">EIXO JURÍDICO</div><div class="field-value">${c.eixoJur}</div></div>
+    <div class="field"><div class="field-label">EIXO OPERACIONAL</div><div class="field-value">${c.eixoOpe}</div></div>
+    <div class="field"><div class="field-label">REVITIMIZAÇÃO</div><div class="field-value" style="color:${c.revit!=='Não identificada'?'var(--danger)':'var(--success)'}">${c.revit}</div></div>
+    ${c.obs ? `<div class="field"><div class="field-label">OBSERVAÇÕES</div><div class="field-value">${c.obs}</div></div>` : ''}
+  `;
+  openModal('Caso ' + id, html, [
+    { label: 'FECHAR', cls: 'btn-secondary', fn: closeModal },
+    { label: 'MARCAR COMO RESOLVIDO', cls: 'btn-primary', fn: () => { atualizarStatus(id,'Resolvido'); closeModal(); } }
+  ]);
+}
+
+function atualizarStatus(id, status) {
+  const casos = getCasos();
+  const i = casos.findIndex(c => c.id === id);
+  if (i !== -1) { casos[i].status = status; saveCasos(casos); renderCasos(); toast('Status atualizado: ' + status); }
+}
+
+function deletarCaso(id) {
+  openModal('Confirmar exclusão', `<p style="font-size:14px">Deseja excluir o caso <strong>${id}</strong>? Esta ação não pode ser desfeita.</p>`, [
+    { label: 'CANCELAR', cls: 'btn-secondary', fn: closeModal },
+    { label: 'EXCLUIR', cls: 'btn-danger', fn: () => {
+      const casos = getCasos().filter(c => c.id !== id);
+      saveCasos(casos); closeModal(); renderCasos(); toast('Caso excluído.', 'warn');
+    }}
+  ]);
+}
+
+// ══════════════════════════════════════════════
+// PROTOCOLO PCI
+// ══════════════════════════════════════════════
+
+const CHECKLIST_DATA = {
+  psi: [
+    { id:'p1', t:'Acolher sem julgamento', d:'Receber a mulher com escuta ativa, sem interrupções ou questionamentos sobre sua conduta pessoal ou moral.' },
+    { id:'p2', t:'Garantir ambiente privado e seguro', d:'Assegurar que o atendimento ocorra em local reservado, sem presença do suposto agressor ou familiares sem consentimento.' },
+    { id:'p3', t:'Usar linguagem clara e acessível', d:'Evitar jargão jurídico sem explicação. Comunicar em linguagem compreensível para a situação da vítima.' },
+    { id:'p4', t:'Evitar perguntas revitimizantes', d:'Não questionar por que a vítima não saiu antes, o que fez para provocar, ou pedir que repita o relato desnecessariamente.' },
+    { id:'p5', t:'Respeitar o tempo da vítima', d:'Não pressionar por respostas rápidas. Permitir pausas e silêncios respeitosos no atendimento.' },
+  ],
+  jur: [
+    { id:'j1', t:'Informar sobre a Lei Maria da Penha', d:'Explicar que a violência doméstica é crime e que o processo pode ser de ação pública incondicionada, independente do desejo da vítima.' },
+    { id:'j2', t:'Orientar sobre Medida Protetiva de Urgência', d:'Informar o direito à MPU (art. 19 da Lei 11.340/2006) e os prazos: 48h para deferimento pelo juiz.' },
+    { id:'j3', t:'Registrar Boletim de Ocorrência', d:'Lavrar o B.O. com a integralidade do relato. Não minimizar, não sugerir "conciliação doméstica" sem base legal.' },
+    { id:'j4', t:'Aplicar Protocolo de Julgamento com Perspectiva de Gênero', d:'Considerar contexto estrutural de violência de gênero nas decisões e encaminhamentos.' },
+    { id:'j5', t:'Não questionar a veracidade do relato', d:'A dúvida sobre o relato não é conduta adequada no primeiro atendimento. Registrar o que foi dito.' },
+  ],
+  ope: [
+    { id:'o1', t:'Acionar a rede de proteção', d:'Identificar e acionar CRAS, CREAS, abrigos e serviços de saúde conforme necessidade identificada.' },
+    { id:'o2', t:'Evitar repetição desnecessária do relato', d:'Coordenar com outros órgãos para que a vítima não precise recontar a situação desde o início em cada serviço.' },
+    { id:'o3', t:'Verificar situação de filhos/dependentes', d:'Checar se há crianças ou adolescentes em situação de risco e acionar Conselho Tutelar se necessário.' },
+    { id:'o4', t:'Documentar todos os encaminhamentos', d:'Registrar formalmente para onde a mulher foi encaminhada, data, contato do serviço e responsável.' },
+    { id:'o5', t:'Fazer acompanhamento pós-atendimento', d:'Registrar retorno ou ausência nos dias subsequentes e acionar serviços de busca ativa se necessário.' },
+  ]
+};
+
+function getProtoState() { return LS.get('proto') || {}; }
+
+function renderProtocolo() {
+  const state = getProtoState();
+  const total = Object.values(CHECKLIST_DATA).flat().length;
+  const done = Object.keys(state).filter(k => state[k]).length;
+
+  ['psi','jur','ope'].forEach(eixo => {
+    const el = document.getElementById('checklist-'+eixo);
+    const tag = {psi:'PSICOSSOCIAL',jur:'JURÍDICO',ope:'OPERACIONAL'}[eixo];
+    const cls = {psi:'eixo-psi',jur:'eixo-jur',ope:'eixo-ope'}[eixo];
+    el.innerHTML = CHECKLIST_DATA[eixo].map(item => `
+      <div class="check-item ${state[item.id]?'done':''}" data-id="${item.id}">
+        <div class="check-box">${state[item.id]?'✓':''}</div>
+        <div class="check-text">
+          <div class="check-title">${item.t}</div>
+          <div class="check-desc">${item.d}</div>
+        </div>
+        <span class="check-eixo ${cls}">${tag}</span>
+      </div>
+    `).join('');
+    el.querySelectorAll('.check-item').forEach(el2 => {
+      el2.addEventListener('click', () => {
+        const id = el2.dataset.id;
+        const s = getProtoState();
+        s[id] = !s[id];
+        LS.set('proto', s);
+        renderProtocolo();
+      });
+    });
+  });
+
+  document.getElementById('proto-progress-text').textContent = `${done} de ${total} itens concluídos`;
+  document.getElementById('proto-progress-bar').style.width = Math.round(done/total*100)+'%';
+}
+
+document.getElementById('btn-reset-proto').addEventListener('click', () => {
+  LS.del('proto');
+  renderProtocolo();
+  toast('Checklist reiniciado.');
+});
+
+// ══════════════════════════════════════════════
+// ENCAMINHAMENTOS
+// ══════════════════════════════════════════════
+
+const ENC_DATA = [
+  { icon:'🏛️', name:'DEAM', desc:'Delegacia Especializada de Atendimento à Mulher. Lavra B.O. com equipe treinada. Solicita Medida Protetiva de Urgência.' },
+  { icon:'🏥', name:'CRAS', desc:'Centro de Referência de Assistência Social. Atendimento psicossocial, benefícios, inserção em programas sociais.' },
+  { icon:'🤝', name:'CREAS', desc:'Centro de Referência Especializado. Acompanhamento sistemático de famílias em situação de violência grave.' },
+  { icon:'🏠', name:'Casa Abrigo', desc:'Acolhimento sigiloso para mulheres e filhos em risco iminente. Acesso via assistência social ou delegacia.' },
+  { icon:'🏨', name:'Hospital / UPA', desc:'Atendimento de lesões físicas, exames de corpo de delito e notificação compulsória de violência doméstica.' },
+  { icon:'⚖️', name:'Defensoria Pública', desc:'Assistência jurídica gratuita para medidas protetivas, divórcio, guarda de filhos e pensão alimentícia.' },
+  { icon:'📋', name:'Ministério Público', desc:'Fiscaliza o cumprimento da Lei Maria da Penha. Pode impetrar ação penal de ofício independente da vítima.' },
+  { icon:'📞', name:'Ligue 180', desc:'Central de Atendimento à Mulher. Funciona 24h. Registra denúncias, orienta e encaminha para serviços locais.' },
+  { icon:'👶', name:'Conselho Tutelar', desc:'Acionado quando há crianças ou adolescentes em situação de risco no contexto de violência doméstica.' },
+  { icon:'🩺', name:'CAPS', desc:'Centro de Atenção Psicossocial. Suporte em saúde mental para casos com trauma grave, uso de substâncias ou crises.' },
+  { icon:'🎓', name:'Vara de VD', desc:'Vara de Violência Doméstica e Familiar. Aprecia pedidos de MPU em 48h. Julga crimes da Lei Maria da Penha.' },
+  { icon:'🌐', name:'IML', desc:'Instituto Médico Legal. Realiza exame de lesões corporais. Laudo é prova técnica nos autos do processo.' },
+];
+
+function renderEncaminhamentos() {
+  document.getElementById('enc-grid').innerHTML = ENC_DATA.map(e => `
+    <div class="enc-card">
+      <div class="enc-icon">${e.icon}</div>
+      <div class="enc-name">${e.name}</div>
+      <div class="enc-desc">${e.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// CAPACITAÇÃO
+// ══════════════════════════════════════════════
+
+const QUIZ_DATA = [
+  {
+    q: 'Uma mulher chega à delegacia e diz que não quer fazer B.O. O que o agente deve fazer?',
+    opts: [
+      'Dispensar a mulher, pois ela não quer registrar.',
+      'Informar que a violência doméstica pode ser de ação pública incondicionada e registrar o relato mesmo assim, garantindo seus direitos.',
+      'Ligar para o marido para resolver a situação.',
+      'Sugerir que o casal tente a reconciliação.'
+    ],
+    correct: 1,
+    exp: 'A Lei Maria da Penha prevê que crimes de violência doméstica são, em muitos casos, de ação pública incondicionada (como lesão corporal). O agente deve registrar o relato e informar todos os direitos da vítima.'
+  },
+  {
+    q: 'O que é revitimização (vitimização secundária)?',
+    opts: [
+      'Quando a mulher sofre violência física pela segunda vez.',
+      'Quando o agressor é solto e volta a agredir.',
+      'Quando a conduta de agentes públicos ou instituições causa novo sofrimento à vítima, por meio de julgamento, descaso ou questionamento do relato.',
+      'Quando a mulher desiste de fazer a denúncia.'
+    ],
+    correct: 2,
+    exp: 'A revitimização é causada pela própria instituição quando questiona a moral da vítima, minimiza a agressão, pede que repita o relato múltiplas vezes ou sugere "conciliação doméstica" sem base legal.'
+  },
+  {
+    q: 'Qual o prazo para que o juiz aprecie um pedido de Medida Protetiva de Urgência (MPU)?',
+    opts: ['24 horas', '48 horas', '72 horas', '5 dias úteis'],
+    correct: 1,
+    exp: 'O artigo 18 da Lei Maria da Penha (Lei 11.340/2006) estabelece que o juiz apreciará o pedido de MPU no prazo de 48 horas, podendo concedê-la mesmo sem audiência das partes.'
+  },
+  {
+    q: 'Qual canal funciona 24 horas por dia para denúncias de violência contra a mulher?',
+    opts: ['Ligue 190', 'Ligue 180', 'Ligue 100', 'Ligue 153'],
+    correct: 1,
+    exp: 'O Ligue 180 é a Central de Atendimento à Mulher, que funciona 24 horas por dia, 7 dias por semana. Registra denúncias, orienta e encaminha para serviços especializados.'
+  },
+  {
+    q: 'Qual dos itens abaixo NÃO é uma forma de violência prevista na Lei Maria da Penha?',
+    opts: ['Violência Psicológica', 'Violência Patrimonial', 'Violência Simbólica', 'Violência Moral'],
+    correct: 2,
+    exp: 'A Lei Maria da Penha (art. 7°) tipifica 5 formas: física, psicológica, sexual, patrimonial e moral. "Violência Simbólica" é um conceito sociológico de Bourdieu, mas não está tipificado expressamente na lei.'
+  },
+  {
+    q: 'Sobre o Eixo Operacional do Protocolo PCI, qual prática é essencial?',
+    opts: [
+      'Enviar a vítima de órgão em órgão sem registro dos encaminhamentos.',
+      'Garantir que a mulher não precise repetir seu relato em cada serviço diferente, documentando todos os encaminhamentos.',
+      'Deixar a decisão de buscar ajuda apenas para a vítima.',
+      'Encerrar o caso após o primeiro atendimento.'
+    ],
+    correct: 1,
+    exp: 'O Eixo Operacional do PCI visa estabelecer fluxos claros de encaminhamento e comunicação entre serviços, evitando que a mulher precise recontar sua história múltiplas vezes — prática que configura revitimização.'
+  }
+];
+
+function renderCapacitacao() {
+  const progress = LS.get('quiz') || {};
+  const el = document.getElementById('quiz-area');
+
+  el.innerHTML = `
+    <div class="hero-banner" style="margin-bottom:32px">
+      <div class="hero-hex" style="background:var(--gold)">◇</div>
+      <div class="hero-text">
+        <h1>Módulo de Capacitação</h1>
+        <p>Quiz baseado na Lei Maria da Penha, ODS 5 e no Protocolo PCI. Teste seus conhecimentos sobre atendimento humanizado.</p>
+      </div>
+    </div>
+    ${QUIZ_DATA.map((q,i) => renderQuizItem(q, i, progress)).join('')}
+    <div style="margin-top:24px;display:flex;gap:12px">
+      <button class="btn btn-secondary" onclick="resetQuiz()">REINICIAR QUIZ</button>
+    </div>
+  `;
+}
+
+function renderQuizItem(q, i, progress) {
+  const answered = progress[i] !== undefined;
+  const correct = progress[i] === q.correct;
+  return `
+    <div class="form-card" style="margin-bottom:16px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">QUESTÃO ${i+1} DE ${QUIZ_DATA.length}</div>
+      <div style="font-family:'Fraunces',serif;font-size:15px;color:var(--text);margin-bottom:20px;line-height:1.6">${q.q}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${q.opts.map((opt,j) => `
+          <div onclick="${answered ? '' : `answerQuiz(${i},${j})`}"
+               style="padding:12px 16px;border:1px solid ${answered ? (j===q.correct ? 'var(--success)' : (progress[i]===j ? 'var(--danger)' : 'var(--border)')) : 'var(--border)'};
+                      background:${answered ? (j===q.correct ? 'color-mix(in srgb, var(--success) 8%, transparent)' : (progress[i]===j ? 'color-mix(in srgb, var(--danger) 8%, transparent)' : 'transparent')) : 'transparent'};
+                      cursor:${answered ? 'default' : 'pointer'};
+                      color:${answered ? (j===q.correct ? 'var(--success)' : (progress[i]===j ? 'var(--danger)' : 'var(--muted)')) : 'var(--text)'};
+                      font-size:12px;transition:all .2s;display:flex;align-items:center;gap:10px">
+            <span style="font-size:14px">${answered ? (j===q.correct ? '✓' : (progress[i]===j ? '✗' : '○')) : '○'}</span>
+            ${opt}
+          </div>
+        `).join('')}
+      </div>
+      ${answered ? `
+        <div style="margin-top:16px;padding:14px;background:color-mix(in srgb, var(--success) 8%, transparent);border:1px solid color-mix(in srgb, var(--success) 30%, transparent);font-size:11px;color:var(--muted);line-height:1.7">
+          <strong style="color:${correct?'var(--success)':'var(--danger)'}">
+            ${correct ? '✓ Correto!' : '✗ Incorreto.'}
+          </strong> ${q.exp}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function answerQuiz(qi, ans) {
+  const progress = LS.get('quiz') || {};
+  progress[qi] = ans;
+  LS.set('quiz', progress);
+  renderCapacitacao();
+}
+
+function resetQuiz() {
+  LS.del('quiz');
+  renderCapacitacao();
+}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// ══════════════════════════════════════════════
+// TEMA CLARO / ESCURO
+// ══════════════════════════════════════════════
+function applyTheme(isLight) {
+  const root = document.documentElement;
+  if (isLight) {
+    root.classList.add('light');
+  } else {
+    root.classList.remove('light');
+  }
+  // update icons & labels
+  const icon = isLight ? '☾' : '☀';
+  const label = isLight ? 'Tema Escuro' : 'Tema Claro';
+  document.getElementById('theme-icon-desk').textContent = icon;
+  document.getElementById('theme-icon-mob').textContent = icon;
+  document.getElementById('theme-label-desk').textContent = label;
+  LS.set('theme', isLight ? 'light' : 'dark');
+}
+
+function toggleTheme() {
+  const isNowLight = !document.documentElement.classList.contains('light');
+  applyTheme(isNowLight);
+}
+
+document.getElementById('theme-toggle-desk').addEventListener('click', toggleTheme);
+document.getElementById('theme-toggle-mob').addEventListener('click', toggleTheme);
+
+// restore saved theme
+const savedTheme = LS.get('theme');
+if (savedTheme === 'light') applyTheme(true);
+
+// ── INIT ──
+renderDashboard();
+</script>
+</body>
+</html>
