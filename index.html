@@ -90,7 +90,7 @@ button { font-family: inherit; }
 #govbar {
   height: 36px; background: var(--blue);
   display: flex; align-items: center; gap: 10px;
-  padding: 0 20px; position: relative; z-index: 10;
+  padding: 0 20px; position: sticky; top: 0; z-index: 60;
 }
 .govbar-shield {
   width: 20px; height: 20px; background: #ffcd07;
@@ -178,19 +178,28 @@ button { font-family: inherit; }
 
 /* Sidebar toggle btn */
 #sb-toggle {
-  position: absolute; top: 50%; right: -14px;
+  position: absolute; top: 50%; right: -18px;
   transform: translateY(-50%);
-  width: 28px; height: 28px;
-  background: var(--surface); border: 2px solid var(--border);
+  width: 36px; height: 36px;
+  background: var(--surface); border: 1.5px solid var(--border);
   border-radius: var(--r-pill); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--muted);
-  box-shadow: var(--sh-sm); z-index: 51;
-  transition: border-color .15s, color .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 51;
+  transition: border-color .2s, box-shadow .2s, background .2s;
 }
-#sb-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.toggle-arrow { display: inline-block; transition: transform .3s; }
-#sidebar.expanded .toggle-arrow { transform: rotate(180deg); }
+#sb-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  box-shadow: 0 3px 12px rgba(19,81,180,.18);
+}
+#sb-toggle svg {
+  width: 16px; height: 16px;
+  stroke: var(--muted);
+  transition: stroke .2s, transform .3s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+}
+#sb-toggle:hover svg { stroke: var(--accent); }
+#sidebar.expanded #sb-toggle svg { transform: rotate(180deg); }
 
 /* ══ MAIN ══ */
 #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -201,7 +210,7 @@ button { font-family: inherit; }
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center;
   padding: 0 24px; gap: 12px;
-  position: sticky; top: 36px; z-index: 40;
+  position: sticky; top: 36px; z-index: 50;
   box-shadow: var(--sh-sm);
 }
 #menu-toggle {
@@ -617,7 +626,9 @@ tbody tr:hover td { background:var(--accent-bg); }
     </div>
 
     <button id="sb-toggle" title="Expandir menu">
-      <span class="toggle-arrow">›</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
     </button>
   </nav>
 
