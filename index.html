@@ -206,27 +206,28 @@ body {
 
 .nav-item {
   width: 100%; display: flex; align-items: center; gap: 12px;
-  padding: 11px 12px; cursor: pointer; border: none;
+  padding: 10px 12px; cursor: pointer; border: none;
   background: transparent; color: var(--muted);
   font-family: 'Mulish', sans-serif; font-size: 14px; font-weight: 600;
   text-align: left; border-radius: var(--r-md);
-  transition: all .18s; white-space: nowrap;
+  transition: color .18s, background .18s; white-space: nowrap;
+  border-left: 3px solid transparent;
 }
-.nav-item:hover { color: var(--accent); background: var(--accent-bg); }
+.nav-item:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
 .nav-item.active {
   color: var(--accent);
   background: var(--accent-bg);
+  border-left-color: var(--accent);
   font-weight: 700;
 }
 .nav-icon {
-  width: 36px; height: 36px; flex-shrink: 0;
+  width: 32px; height: 32px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; border-radius: var(--r-sm);
-  background: transparent;
-  transition: background .18s;
+  font-size: 19px;
 }
-.nav-item.active .nav-icon { background: var(--accent); color: #fff; font-size: 16px; }
-.nav-item:hover:not(.active) .nav-icon { background: var(--accent-bg); }
 .nav-label { display: none; }
 #sidebar.expanded .nav-label { display: block; }
 
@@ -278,7 +279,7 @@ body:has(#sidebar.expanded) #sidebar-toggle { left: 226px; }
   position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  z-index: 200;
+  z-index: 500;
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -2px 12px rgba(0,0,0,.08);
 }
@@ -837,7 +838,7 @@ tbody tr:hover td { background: var(--accent-bg); }
 @media (max-width: 768px) {
   #sidebar, #sidebar-toggle { display: none !important; }
   #bottom-nav { display: block; }
-  #main { margin-left: 0; }
+  #main { margin-left: 0; padding-bottom: 74px; }
   #menu-toggle { display: none; }
   #theme-toggle-mob { display: flex !important; }
   .view { padding: 16px 14px 90px; }
